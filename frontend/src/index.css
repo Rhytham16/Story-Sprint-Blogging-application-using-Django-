@@ -1,0 +1,35 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #fff;
+  color: #212529;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.migration-note {
+  border: 1px dashed #ced4da;
+  background: #f8f9fa;
+  border-radius: 0.25rem;
+}
+
+.dashboard-shell .nav-link.active {
+  background-color: #ffc107;
+  color: #212529 !important;
+}
