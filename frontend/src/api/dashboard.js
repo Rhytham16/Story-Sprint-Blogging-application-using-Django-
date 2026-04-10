@@ -4,6 +4,22 @@ export function getDashboardSummary() {
   return apiRequest('/api/dashboard/summary/')
 }
 
+export function getCategoryStats() {
+  return apiRequest('/api/analytics/categories/')
+}
+
+export function getUserStats(userId) {
+  const searchParams = new URLSearchParams()
+
+  if (userId !== undefined && userId !== null && userId !== '') {
+    searchParams.set('user_id', userId)
+  }
+
+  const queryString = searchParams.toString()
+  const path = queryString ? `/api/analytics/users/?${queryString}` : '/api/analytics/users/'
+  return apiRequest(path)
+}
+
 export function getDashboardOptions() {
   return apiRequest('/api/dashboard/options/')
 }

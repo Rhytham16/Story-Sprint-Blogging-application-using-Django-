@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getPosts } from '../api/site'
+import { searchPosts } from '../api/site'
 import HomePostCard from '../components/HomePostCard'
 
 function SearchPage() {
@@ -24,7 +24,7 @@ function SearchPage() {
       setIsLoading(true)
 
       try {
-        const results = await getPosts({ keyword })
+        const results = await searchPosts(keyword)
         if (isMounted) {
           setPosts(results)
           setError('')

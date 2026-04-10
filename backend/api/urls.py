@@ -4,14 +4,16 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
     BlogViewSet,
-    CurrentUserAPIView,
     CategoryViewSet,
+    CategoryStatsAPIView,
+    CurrentUserAPIView,
     DashboardOptionsAPIView,
     DashboardSummaryAPIView,
     LoginAPIView,
     LogoutAPIView,
     RegisterAPIView,
     SiteMetaAPIView,
+    UserStatsAPIView,
     UserViewSet,
 )
 
@@ -22,6 +24,8 @@ router.register(r'users', UserViewSet, basename='user')
 
 urlpatterns = [
     path('site/', SiteMetaAPIView.as_view(), name='api-site'),
+    path('analytics/categories/', CategoryStatsAPIView.as_view(), name='api-category-stats'),
+    path('analytics/users/', UserStatsAPIView.as_view(), name='api-user-stats'),
     path('auth/register/', RegisterAPIView.as_view(), name='api-register'),
     path('auth/login/', LoginAPIView.as_view(), name='api-login'),
     path('auth/logout/', LogoutAPIView.as_view(), name='api-logout'),

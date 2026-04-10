@@ -23,6 +23,15 @@ export function getPosts(params = {}) {
   return apiRequest(path)
 }
 
+export function searchPosts(keyword) {
+  const searchParams = new URLSearchParams()
+  if (keyword?.trim()) {
+    searchParams.set('keyword', keyword.trim())
+  }
+
+  return apiRequest(`/api/posts/search/?${searchParams.toString()}`)
+}
+
 export function getPostDetail(slug) {
   return apiRequest(`/api/posts/${slug}/`)
 }

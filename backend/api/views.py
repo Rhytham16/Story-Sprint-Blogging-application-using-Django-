@@ -1,6 +1,7 @@
+import json
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission, User
-from django.db import connection
 from django.db.models import Q
 from django.template.defaultfilters import slugify
 from rest_framework import status, viewsets
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from blogs.models import About, Blog, Category, Comment, SocialLink
 from .permissions import IsAdminOrReadOnly, IsAuthorOrAdminOrReadOnly
+from .procedures import call_procedure_fetch_all, call_procedure_fetch_one
 from .serializers import (
     AdminUserCreateUpdateSerializer,
     AboutSerializer,
@@ -80,25 +82,48 @@ class DashboardSummaryAPIView(APIView):
 
     def get(self, request):
         try:
-            with connection.cursor() as cursor:
-                cursor.callproc('GetDashboardSummary')
-                row = cursor.fetchone()
-
-            data = {
-                'category_count': row[0],
-                'blogs_count': row[1],
-                'published_blogs_count': row[2],
-                'users_count': row[3],
-                'comments_count': row[4],
-            }
+            data = call_procedure_fetch_one('GetDashboardSummary')
             return Response(data)
-
         except Exception as e:
             return Response(
                 {'detail': f'Failed to load dashboard summary: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
+class CategoryStatsAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        try:
+            data = call_procedure_fetch_all('GetCategoryStats')
+            return Response(data)
+        except Exception as e:
+            return Response(
+                {'detail': f'Failed to load category stats: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class UserStatsAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        try:
+            user_id = request.query_params.get('user_id')
+            user_id = int(user_id) if user_id else None
+            data = call_procedure_fetch_all('GetUserStats', [user_id])
+            return Response(data)
+        except ValueError:
+            return Response(
+                {'detail': 'user_id must be an integer.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            return Response(
+                {'detail': f'Failed to load user stats: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class DashboardOptionsAPIView(APIView):
@@ -215,9 +240,9 @@ class BlogViewSet(viewsets.ModelViewSet):
 
         if keyword:
             queryset = queryset.filter(
-                Q(title__icontains=keyword) |
-                Q(short_description__icontains=keyword) |
-                Q(blog_body__icontains=keyword)
+                Q(title__icontains=keyword)
+                | Q(short_description__icontains=keyword)
+                | Q(blog_body__icontains=keyword)
             )
 
         if featured is not None:
@@ -241,10 +266,12 @@ class BlogViewSet(viewsets.ModelViewSet):
         return BlogWriteSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'search']:
             permission_classes = [AllowAny]
         elif self.action == 'create':
             permission_classes = [IsAuthenticated]
+        elif self.action == 'bulk_status':
+            permission_classes = [IsAdminUser]
         elif self.action == 'comments':
             if self.request.method == 'GET':
                 permission_classes = [AllowAny]
@@ -264,6 +291,51 @@ class BlogViewSet(viewsets.ModelViewSet):
         post = serializer.save()
         post.slug = f"{slugify(post.title)}-{post.id}"
         post.save()
+
+    @action(detail=False, methods=['get'], url_path='search')
+    def search(self, request):
+        keyword = (request.query_params.get('keyword') or '').strip()
+
+        if not keyword:
+            return Response([])
+
+        try:
+            results = call_procedure_fetch_all('SearchBlogs', [keyword])
+            return Response(results)
+        except Exception as e:
+            return Response(
+                {'detail': f'Failed to search blogs: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=['post'], url_path='bulk-status')
+    def bulk_status(self, request):
+        blog_ids = request.data.get('blog_ids', [])
+        new_status = request.data.get('status')
+
+        if not isinstance(blog_ids, list) or not blog_ids:
+            return Response(
+                {'detail': 'blog_ids must be a non-empty list.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if new_status not in ['Draft', 'Published']:
+            return Response(
+                {'detail': "status must be 'Draft' or 'Published'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            result = call_procedure_fetch_one(
+                'UpdateBlogStatusBulk',
+                [json.dumps(blog_ids), new_status],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'detail': f'Failed to update blog status: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @action(detail=True, methods=['get', 'post'], url_path='comments')
     def comments(self, request, slug=None):
