@@ -18,20 +18,18 @@ from django.urls import include, path
 from . import views
 from django.conf.urls.static import static
 from django.conf import settings
-from blogs import views as BlogsView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.home, name='home'),
-    path('category/', include('blogs.urls')),
     path('api/', include('api.urls')),
-    path('blogs/<slug:slug>/', BlogsView.blogs, name='blogs'),
-    # Search endpoint
-    path('search/', BlogsView.search, name='search'),
-    path('register/', views.register, name='register'),
-    path('login/', views.login, name='login'),
+    path('', views.react_app, name='home'),
+    path('category/<int:category_id>/', views.react_app, name='posts_by_category'),
+    path('blogs/<slug:slug>/', views.react_app, name='blogs'),
+    path('search/', views.react_app, name='search'),
+    path('register/', views.react_app, name='register'),
+    path('login/', views.react_app, name='login'),
     path('logout/', views.logout, name='logout'),
-
-    # Dashboards
-    path('dashboard/', include('dashboards.urls')),
+    path('dashboard/', views.react_app, name='dashboard'),
+    path('dashboard/<path:path>/', views.react_app, name='dashboard-spa'),
+    path('<path:path>/', views.react_app, name='spa-catchall'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

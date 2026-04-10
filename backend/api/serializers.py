@@ -1,7 +1,7 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, Permission, User
 from rest_framework import serializers
 
-from blogs.models import Blog, Category, Comment
+from blogs.models import About, Blog, Category, Comment, SocialLink
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -154,6 +154,8 @@ class AdminUserCreateUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
+        groups = validated_data.pop('groups', None)
+        user_permissions = validated_data.pop('user_permissions', None)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -162,6 +164,13 @@ class AdminUserCreateUpdateSerializer(serializers.ModelSerializer):
             instance.set_password(password)
 
         instance.save()
+
+        if groups is not None:
+            instance.groups.set(groups)
+
+        if user_permissions is not None:
+            instance.user_permissions.set(user_permissions)
+
         return instance
 
 
@@ -181,3 +190,32 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password2')
         return User.objects.create_user(**validated_data)
+
+
+class AboutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = About
+        fields = ['id', 'about_heading', 'about_description']
+
+
+class SocialLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLink
+        fields = ['id', 'platform', 'link']
+
+
+class GroupOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'name']
+
+
+class PermissionOptionSerializer(serializers.ModelSerializer):
+    label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Permission
+        fields = ['id', 'name', 'codename', 'label']
+
+    def get_label(self, obj):
+        return f'{obj.content_type.app_label}.{obj.codename}'

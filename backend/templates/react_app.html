@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_config.app_name }}</title>
+    <link href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Playfair+Display:700,900" rel="stylesheet">
+    <link href="{% static 'css/blog.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+    <div id="root">
+        <div class="container py-5">
+            <header class="blog-header py-3 border-bottom">
+                <div class="row flex-nowrap justify-content-between align-items-center">
+                    <div class="col-12 text-center">
+                        <a class="blog-header-logo text-dark" href="/">Django Blog</a>
+                    </div>
+                </div>
+            </header>
+
+            <main class="py-5 text-center">
+                <h2 class="mb-3">Frontend shell is ready</h2>
+                <p class="text-muted mb-4">
+                    Django is serving the React mount template. Existing Django templates and
+                    views remain available as the visual and behavior reference during migration.
+                </p>
+                <p class="mb-0 text-muted">
+                    Build the React app in <code>D:\Blog App\frontend</code> and attach its bundle here in the next step.
+                </p>
+            </main>
+        </div>
+    </div>
+
+    {{ app_config|json_script:"app-config" }}
+</body>
+</html>

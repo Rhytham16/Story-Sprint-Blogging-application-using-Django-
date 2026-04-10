@@ -6,6 +6,7 @@ from .forms import RegistrationForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import auth
 
+
 def home(request):
     featured_posts = Blog.objects.filter(is_featured=True, status='Published').order_by('updated_at')
     posts = Blog.objects.filter(is_featured=False, status='Published')
@@ -60,3 +61,16 @@ def login(request):
 def logout(request):
     auth.logout(request)
     return redirect('home')
+
+
+def react_app(request):
+    return render(
+        request,
+        'react_app.html',
+        {
+            'app_config': {
+                'api_base_url': '/api',
+                'app_name': 'Django Blogs',
+            }
+        },
+    )
